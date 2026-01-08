@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
+#include "StelApp.hpp"
 #include "StelMainView.hpp"
 #include "StelSplashScreen.hpp"
 #include "StelTranslator.hpp"
@@ -27,9 +28,12 @@
 #include "CLIProcessor.hpp"
 #include "StelIniParser.hpp"
 #include "StelUtils.hpp"
+#include "WindowHelper.hpp"
 #ifdef ENABLE_SCRIPTING
 #include "StelScriptOutput.hpp"
 #endif
+
+#include "StelActionMgr.hpp"
 
 #include <QDebug>
 
@@ -48,10 +52,23 @@
 #include <QStringList>
 #include <QTextStream>
 #include <QTranslator>
+#include <QMainWindow>
+#include <QMenu>
+#include <QMenuBar>
 #include <QNetworkDiskCache>
 #include <QThread>
 #include <QThreadPool>
+#include <QVBoxLayout>
 
+#include "ConfigurationDialog.hpp"
+#include "DateTimeDialog.hpp"
+#include "HelpDialog.hpp"
+#include "LocationDialog.hpp"
+#include "SearchDialog.hpp"
+#include "ViewDialog.hpp"
+#include "ShortcutsDialog.hpp"
+#include "AstroCalcDialog.hpp"
+#include "ObsListDialog.hpp"
 
 #ifdef Q_OS_MACOS
 #include <QEvent>
@@ -156,6 +173,8 @@ void clearCache()
 	cacheMgr->setCacheDirectory(StelFileMgr::getCacheDir());
 	cacheMgr->clear(); // Removes all items from the cache.
 }
+
+
 
 // Main stellarium procedure
 int main(int argc, char **argv)
@@ -442,7 +461,7 @@ int main(int argc, char **argv)
 	CustomQTranslator trans;
 	app.installTranslator(&trans);
 
-	StelMainView mainWin(confSettings);
+	StelMainView* mainView = new StelMainView(confSettings); // Must be created before MainWindow
 
 	int screen = confSettings->value("video/screen_number", 0).toInt();
 	if (screen < 0 || screen >= qApp->screens().count())
@@ -458,34 +477,41 @@ int main(int argc, char **argv)
 								confSettings->value("video/screen_h", screenGeom.height()).toInt());
 	const auto size = QSize(std::lround(virtSize.width()/pixelRatio),
 							std::lround(virtSize.height()/pixelRatio));
-	mainWin.resize(size);
+
+	QMainWindow* mainWindow = new QMainWindow();
+	WindowHelper* windowHelper = new WindowHelper(mainWindow, confSettings);
+	StelMainView::setMainWindow(mainWindow);
+	mainWindow->setWindowTitle(StelUtils::getApplicationName());
+
+	mainWindow -> resize(size);
 
 	const bool fullscreen = confSettings->value("video/fullscreen", true).toBool();
-	if (fullscreen)
-	{
-		// The "+1" below is to work around Linux/Gnome problem with mouse focus.
-		mainWin.move(screenGeom.x()+1, screenGeom.y()+1);
-		// The fullscreen window appears on screen where is the majority of
-		// the normal window. Therefore we crop the normal window to the
-		// screen area to ensure that the majority is not on another screen.
-		mainWin.setGeometry(mainWin.geometry() & screenGeom);
-		mainWin.setFullScreen(true);
-	}
-	else
-	{
-		const int x = confSettings->value("video/screen_x", 0).toInt();
-		const int y = confSettings->value("video/screen_y", 0).toInt();
-		mainWin.move(screenGeom.x() + x/pixelRatio,
-			     screenGeom.y() + y/pixelRatio);
-	}
 
-	mainWin.show();
-	SplashScreen::finish(&mainWin);
+	windowHelper->restoreWindowPosition();
+	windowHelper->restoreWindowSize();
+	windowHelper->setFullScreen(fullscreen);
+
+	setupMenus(mainWindow, &app);
+
+	QWidget* container = new QWidget();
+	QVBoxLayout* layout = new QVBoxLayout(container);
+	layout->setContentsMargins(0, 0, 0, 0);
+	// mainView->show();
+	layout->addWidget(mainView);
+	mainWindow->setCentralWidget(container);
+
+	mainWindow->resize(1024, 768);
+	mainWindow->show();
+	// SplashScreen::finish(mainWindow);
+
+	mainWindow->raise();
+	mainWindow->activateWindow();
+
 	qDebug() << "Max thread count (Global Pool): " << QThreadPool::globalInstance()->maxThreadCount();
 	// Share available cores with the TextureLoader and other jobs
 	//QThreadPool::globalInstance()->setMaxThreadCount(qMax(1,QThread::idealThreadCount()/2-1));
 	app.exec();
-	mainWin.deinit();
+	mainView -> deinit();
 
 	delete confSettings;
 	StelLogger::deinit();

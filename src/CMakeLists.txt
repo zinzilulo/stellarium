@@ -270,6 +270,8 @@ SET(stellarium_lib_SRCS
      CLIProcessor.cpp
      translations.h
      translations_regions.h
+     WindowHelper.hpp
+     WindowHelper.cpp
 )
 
 IF(ENABLE_PCH)
@@ -369,6 +371,7 @@ IF(STELLARIUM_GUI_MODE STREQUAL "Standard")
           gui/ObsListDialog.hpp
           gui/ObsListDialog.cpp
           gui/StelDialog.hpp
+          gui/StelDialogWindow.hpp
           gui/StelDialog_p.hpp
           gui/StelDialog.cpp
           gui/StelDialogSeparate.hpp
@@ -378,11 +381,11 @@ IF(STELLARIUM_GUI_MODE STREQUAL "Standard")
           gui/SkylightDialog.hpp
           gui/SkylightDialog.cpp
           gui/ContributorsList.hpp
-          gui/StelCloseButton.hpp
-          gui/StelCloseButton.cpp
           gui/ColorButton.hpp
           gui/ColorButton.cpp
           gui/ExternalStepSpinBox.hpp
+          gui/StyleUtils.hpp
+          gui/StyleUtils.cpp
      )
 
      ################# compiles .ui files ############

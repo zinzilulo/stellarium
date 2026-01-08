@@ -241,7 +241,7 @@ void StelApp::deinitStatic()
 StelApp::StelApp(StelMainView *parent)
 	: QObject(parent)
 	, randomGenerator(Q_NULLPTR)
-	, mainWin(parent)
+	, mainWindow(parent)
 	, core(Q_NULLPTR)
 	, moduleMgr(Q_NULLPTR)
 	, localeMgr(Q_NULLPTR)
@@ -455,7 +455,7 @@ void StelApp::init(QSettings* conf)
 	setGuiFontSize(confSettings->value("gui/gui_font_size", getDefaultGuiFontSize()).toInt());
 	setScreenButtonScale(confSettings->value("gui/screen_button_scale", 100).toDouble());
 
-	SplashScreen::present(guiFontSizeRatio());
+	// SplashScreen::present(guiFontSizeRatio());
 
 	setFlagImmediateSave(confSettings->value("gui/immediate_save_details", false).toBool());
 
@@ -466,16 +466,16 @@ void StelApp::init(QSettings* conf)
 	//Initializing locale at the beginning to show all strings translated
 	localeMgr = new StelLocaleMgr();
 	localeMgr->init();
-	//SplashScreen::showMessage(q_("Initializing locales..."));
+	// SplashScreen::showMessage(q_("Initializing locales..."));
 
-	SplashScreen::showMessage(q_("Initializing textures..."));
+	// SplashScreen::showMessage(q_("Initializing textures..."));
 	// Initialize AFTER creation of openGL context
 	textureMgr = new StelTextureMgr();
 
-	SplashScreen::showMessage(q_("Initializing network access..."));
+	// SplashScreen::showMessage(q_("Initializing network access..."));
 	networkAccessManager = new QNetworkAccessManager(this);
 	networkAccessManager->setRedirectPolicy(QNetworkRequest::NoLessSafeRedirectPolicy);
-	SplashScreen::showMessage(q_("Initializing network disk cache..."));
+	// SplashScreen::showMessage(q_("Initializing network disk cache..."));
 	// Activate http cache if Qt version >= 4.5
 	QNetworkDiskCache* cache = new QNetworkDiskCache(networkAccessManager);
 	//make maximum cache size configurable (in MB)
@@ -489,7 +489,7 @@ void StelApp::init(QSettings* conf)
 	connect(networkAccessManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(reportFileDownloadFinished(QNetworkReply*)));
 
 	// Proxy Initialisation
-	SplashScreen::showMessage(q_("Initializing network proxy..."));
+	// SplashScreen::showMessage(q_("Initializing network proxy..."));
 	setupNetworkProxy();
 
 	//create non-StelModule managers
@@ -503,67 +503,67 @@ void StelApp::init(QSettings* conf)
 
 	// register non-modules for StelProperty tracking
 	propMgr->registerObject(this);
-	propMgr->registerObject(mainWin);
+	propMgr->registerObject(mainWindow);
 
 	// Stel Object Data Base manager
-	SplashScreen::showMessage(q_("Initializing Object Database..."));
+	// SplashScreen::showMessage(q_("Initializing Object Database..."));
 	stelObjectMgr = new StelObjectMgr();
 	stelObjectMgr->init();
 	getModuleMgr().registerModule(stelObjectMgr);	
 
 	// Hips surveys
-	SplashScreen::showMessage(q_("Initializing HiPS survey..."));
+	// SplashScreen::showMessage(q_("Initializing HiPS survey..."));
 	HipsMgr* hipsMgr = new HipsMgr();
 	hipsMgr->init();
 	getModuleMgr().registerModule(hipsMgr);
 
 	// Init the solar system first
-	SplashScreen::showMessage(q_("Initializing Solar System objects..."));
+	// SplashScreen::showMessage(q_("Initializing Solar System objects..."));
 	SolarSystem* ssystem = new SolarSystem();
 	ssystem->init();
 	getModuleMgr().registerModule(ssystem);
 
 	// Init the nomenclature for Solar system bodies
-	SplashScreen::showMessage(q_("Initializing planetary nomenclature..."));
+	// SplashScreen::showMessage(q_("Initializing planetary nomenclature..."));
 	NomenclatureMgr* nomenclature = new NomenclatureMgr();
 	nomenclature->init();
 	getModuleMgr().registerModule(nomenclature);
 
 	// Load stars & their names
-	SplashScreen::showMessage(q_("Initializing stars..."));
+	// SplashScreen::showMessage(q_("Initializing stars..."));
 	StarMgr* hip_stars = new StarMgr();
 	hip_stars->init();
 	getModuleMgr().registerModule(hip_stars);
 
-	SplashScreen::showMessage(q_("Initializing core..."));
+	// SplashScreen::showMessage(q_("Initializing core..."));
 	core->init();
 
 	// Init nebulas
-	SplashScreen::showMessage(q_("Initializing deep-sky objects..."));
+	// SplashScreen::showMessage(q_("Initializing deep-sky objects..."));
 	NebulaMgr* nebulas = new NebulaMgr();
 	nebulas->init();
 	getModuleMgr().registerModule(nebulas);
 
 	// Init milky way
-	SplashScreen::showMessage(q_("Initializing Milky Way..."));
+	// SplashScreen::showMessage(q_("Initializing Milky Way..."));
 	MilkyWay* milky_way = new MilkyWay();
 	milky_way->init();
 	getModuleMgr().registerModule(milky_way);
 
 	// Init zodiacal light
-	SplashScreen::showMessage(q_("Initializing zodiacal light..."));
+	// SplashScreen::showMessage(q_("Initializing zodiacal light..."));
 	ZodiacalLight* zodiacal_light = new ZodiacalLight();
 	zodiacal_light->init();
 	getModuleMgr().registerModule(zodiacal_light);
 
 	// Init sky image manager
-	SplashScreen::showMessage(q_("Initializing sky image layer..."));
+	// SplashScreen::showMessage(q_("Initializing sky image layer..."));
 	skyImageMgr = new StelSkyLayerMgr();
 	skyImageMgr->init();
 	getModuleMgr().registerModule(skyImageMgr);
 
 	// Toast surveys
-	SplashScreen::showMessage(q_("Initializing TOAST surveys..."));
+	// SplashScreen::showMessage(q_("Initializing TOAST surveys..."));
 	ToastMgr* toasts = new ToastMgr();
 	toasts->init();
 	getModuleMgr().registerModule(toasts);
@@ -577,7 +577,7 @@ void StelApp::init(QSettings* conf)
 	const bool audioOK = false;
 #endif
 	if (audioOK)
-		SplashScreen::showMessage(q_("Initializing audio..."));
+		// SplashScreen::showMessage(q_("Initializing audio..."));
 	audioMgr = new StelAudioMgr(audioOK);
 	// QtMultimedia can create and destroy intermediate contexts during initialization,
 	// displacing our main context, see GH#4143. So restore our context.
@@ -585,26 +585,26 @@ void StelApp::init(QSettings* conf)
 
 	// Init video manager
 #ifdef ENABLE_MEDIA
-	SplashScreen::showMessage(q_("Initializing video..."));
+	// SplashScreen::showMessage(q_("Initializing video..."));
 #endif
 	videoMgr = new StelVideoMgr(audioOK);
 	videoMgr->init();
 	getModuleMgr().registerModule(videoMgr);
 
 	// Constellations
-	SplashScreen::showMessage(q_("Initializing constellations..."));
+	// SplashScreen::showMessage(q_("Initializing constellations..."));
 	ConstellationMgr* constellations = new ConstellationMgr(hip_stars);
 	constellations->init();
 	getModuleMgr().registerModule(constellations);
 
 	// Asterisms
-	SplashScreen::showMessage(q_("Initializing asterisms..."));
+	// SplashScreen::showMessage(q_("Initializing asterisms..."));
 	AsterismMgr* asterisms = new AsterismMgr(hip_stars);
 	asterisms->init();
 	getModuleMgr().registerModule(asterisms);
 
 	// Landscape, atmosphere & cardinal points section
-	SplashScreen::showMessage(q_("Initializing landscape..."));
+	// SplashScreen::showMessage(q_("Initializing landscape..."));
 	LandscapeMgr* landscape = new LandscapeMgr();
 	landscape->init();
 	getModuleMgr().registerModule(landscape);
@@ -617,51 +617,51 @@ void StelApp::init(QSettings* conf)
 		emit core->targetLocationChanged(loc, landscapeAutoName); // inform others about our next location. E.g., let LandscapeMgr load a new landscape.
 	}
 
-	SplashScreen::showMessage(q_("Initializing grid lines..."));
+	// SplashScreen::showMessage(q_("Initializing grid lines..."));
 	GridLinesMgr* gridLines = new GridLinesMgr();
 	gridLines->init();
 	getModuleMgr().registerModule(gridLines);
 	
-	SplashScreen::showMessage(q_("Initializing special markers..."));
+	// SplashScreen::showMessage(q_("Initializing special markers..."));
 	SpecialMarkersMgr* specialMarkers = new SpecialMarkersMgr();
 	specialMarkers->init();
 	getModuleMgr().registerModule(specialMarkers);
 
 	// Sporadic Meteors
-	SplashScreen::showMessage(q_("Initializing sporadic meteors..."));
+	// SplashScreen::showMessage(q_("Initializing sporadic meteors..."));
 	SporadicMeteorMgr* meteors = new SporadicMeteorMgr(10, 72);
 	meteors->init();
 	getModuleMgr().registerModule(meteors);
 
 	// User labels
-	SplashScreen::showMessage(q_("Initializing user labels..."));
+	// SplashScreen::showMessage(q_("Initializing user labels..."));
 	LabelMgr* skyLabels = new LabelMgr();
 	skyLabels->init();
 	getModuleMgr().registerModule(skyLabels);
 
-	SplashScreen::showMessage(q_("Initializing sky cultures..."));
+	// SplashScreen::showMessage(q_("Initializing sky cultures..."));
 	skyCultureMgr->init();
 
 	// User markers
-	SplashScreen::showMessage(q_("Initializing user markers..."));
+	// SplashScreen::showMessage(q_("Initializing user markers..."));
 	MarkerMgr* skyMarkers = new MarkerMgr();
 	skyMarkers->init();
 	getModuleMgr().registerModule(skyMarkers);
 
 	// Init custom objects
-	SplashScreen::showMessage(q_("Initializing custom objects..."));
+	// SplashScreen::showMessage(q_("Initializing custom objects..."));
 	CustomObjectMgr* custObj = new CustomObjectMgr();
 	custObj->init();
 	getModuleMgr().registerModule(custObj);
 
 	// Init highlights
-	SplashScreen::showMessage(q_("Initializing highlights..."));
+	// SplashScreen::showMessage(q_("Initializing highlights..."));
 	HighlightMgr* hlMgr = new HighlightMgr();
 	hlMgr->init();
 	getModuleMgr().registerModule(hlMgr);
 
 	// Init specific time
-	SplashScreen::showMessage(q_("Initializing specific time..."));
+	// SplashScreen::showMessage(q_("Initializing specific time..."));
 	SpecificTimeMgr* specificTime = new SpecificTimeMgr();
 	specificTime->init();
 	getModuleMgr().registerModule(specificTime);
@@ -669,12 +669,12 @@ void StelApp::init(QSettings* conf)
 	//Create the script manager here, maybe some modules/plugins may want to connect to it
 	//It has to be initialized later after all modules have been loaded by calling initScriptMgr
 #ifdef ENABLE_SCRIPTING
-	SplashScreen::showMessage(q_("Initializing scripting..."));
+	// SplashScreen::showMessage(q_("Initializing scripting..."));
 	scriptAPIProxy = new StelMainScriptAPIProxy(this);
 	scriptMgr = new StelScriptMgr(this);
 #endif
 
-	SplashScreen::showMessage(q_("Initializing color scheme..."));
+	// SplashScreen::showMessage(q_("Initializing color scheme..."));
 	// Initialisation of the color scheme
 	emit colorSchemeChanged("default");
 	setVisionModeNight(confSettings->value("viewing/flag_night", false).toBool());
@@ -682,7 +682,7 @@ void StelApp::init(QSettings* conf)
 	// Enable viewport effect at startup if he set
 	setViewportEffect(confSettings->value("video/viewport_effect", "none").toString());
 
-	SplashScreen::clearMessage();
+	// SplashScreen::clearMessage();
 	updateI18n();
 
 	// Init actions.
@@ -716,7 +716,7 @@ void StelApp::init(QSettings* conf)
 		}
 		else
 		{
-			SplashScreen::showMessage(q_("Initializing SPOUT sender..."));
+			// SplashScreen::showMessage(q_("Initializing SPOUT sender..."));
 			// Create the SpoutSender object.
 			QString spoutName = qApp->property("spoutName").toString();
 			if(spoutName.isEmpty())
@@ -731,7 +731,7 @@ void StelApp::init(QSettings* conf)
 				spoutSender = Q_NULLPTR;
 				qApp->setProperty("spout", "");
 			}
-			SplashScreen::clearMessage();
+			// SplashScreen::clearMessage();
 		}
 	}
 	else
@@ -753,7 +753,7 @@ void StelApp::initPlugIns()
 	{
 		if (i.loadAtStartup==false)
 			continue;
-		SplashScreen::showMessage(QString("%1 \"%2\"...").arg(q_("Loading plugin"), q_(i.info.displayedName)));
+		// SplashScreen::showMessage(QString("%1 \"%2\"...").arg(q_("Loading plugin"), q_(i.info.displayedName)));
 		StelModule* m = moduleMgr->loadPlugin(i.info.id);
 		if (m!=Q_NULLPTR)
 		{
@@ -763,7 +763,7 @@ void StelApp::initPlugIns()
 			m->init();
 		}
 	}
-	SplashScreen::clearMessage();
+	// SplashScreen::clearMessage();
 }
 
 void StelApp::deinit()
@@ -1244,6 +1244,61 @@ void StelApp::setVisionModeNight(bool b)
 	}
 }
 
+// void StelApp::setDarkMode(bool b)
+// {
+// 	if (flagDarkMode!=b)
+// 	{
+// 		flagDarkMode=b;
+// 		StelApp::immediateSave("gui/flag_dark_mode", b);
+// 		emit darkModeChanged(b);
+// 	}
+// }
+
+bool StelApp::getDarkMode(){
+	#if defined(Q_OS_WIN)
+		// Windows 10: Check registry for AppsUseLightTheme
+		QSettings settings("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+						QSettings::NativeFormat);
+		return settings.value("AppsUseLightTheme", 1).toInt() == 0; // 0 = dark mode
+
+	#elif defined(Q_OS_MAC)
+		// macOS: Use defaults command to check AppleInterfaceStyle
+		QProcess process;
+		process.start("defaults", {"read", "-g", "AppleInterfaceStyle"});
+		process.waitForFinished();
+		QString output = process.readAllStandardOutput().trimmed();
+		return output.compare("Dark", Qt::CaseInsensitive) == 0;
+
+	#elif defined(Q_OS_UNIX)
+		// GNOME (Linux): Use gsettings to get interface color-scheme
+		QProcess process;
+		process.start("gsettings", {"get", "org.gnome.desktop.interface", "color-scheme"});
+		process.waitForFinished();
+		QString output = process.readAllStandardOutput();
+		return output.contains("dark", Qt::CaseInsensitive);
+
+	#else
+		// Other platforms: Default to false (light mode)
+		return true;
+	#endif
+}
+
+void StelApp::startDarkModeMonitor() {
+    currentDarkMode = getDarkMode();
+
+    QTimer* timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, &StelApp::checkDarkMode);
+    timer->start(100);
+}
+
+void StelApp::checkDarkMode() {
+    bool darkNow = getDarkMode();
+    if (darkNow != currentDarkMode) {
+        currentDarkMode = darkNow;
+        emit darkModeChanged(darkNow);
+    }
+}
+
 void StelApp::setFlagOverwriteInfoColor(bool b)
 {
 	if (flagOverwriteInfoColor!=b)
@@ -1352,7 +1407,7 @@ void StelApp::updateI18n()
 
 void StelApp::ensureGLContextCurrent()
 {
-	mainWin->glContextMakeCurrent();
+	mainWindow->glContextMakeCurrent();
 }
 
 // Return the time since when stellarium is running in second.

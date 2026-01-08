@@ -23,8 +23,12 @@
 #include <memory>
 #include <qopengl.h>
 #include <qguiapplication.h>
+#include <QMainWindow>
+#include <QProcess>
+#include <QSettings>
 #include <QString>
 #include <QObject>
+#include <QOperatingSystemVersion>
 #include <QRandomGenerator>
 #include "StelTextureTypes.hpp"
 #include "StelModule.hpp"
@@ -246,6 +250,8 @@ public:
 	//! This means, enclose the temporary state change with 2 calls (false/true) per such method.
 	void enableBottomStelBarUpdates(bool enable);
 
+	void startDarkModeMonitor();
+
 #ifdef ENABLE_SCRIPTING
 	//! Get the script API proxy (for signal handling)
 	StelMainScriptAPIProxy* getMainScriptAPIProxy() const {return scriptAPIProxy;}
@@ -294,6 +300,10 @@ public slots:
 	void setVisionModeNight(bool);
 	//! Get flag for activating night vision mode.
 	bool getVisionModeNight() const {return flagNightVision;}
+	
+	bool getDarkMode();
+
+	void checkDarkMode();  // Periodic check
 
 	//! Set flag for activating overwrite mode for text color in info panel.
 	void setFlagOverwriteInfoColor(bool);
@@ -371,6 +381,7 @@ public slots:
 	void quit();
 signals:
 	void visionNightModeChanged(bool);
+	void darkModeChanged(bool dark);
 	void flagShowDecimalDegreesChanged(bool);
 	void flagUseAzimuthFromSouthChanged(bool);
 	void flagUseCCSDesignationChanged(bool);
@@ -423,7 +434,7 @@ private:
 	QRandomGenerator *randomGenerator;
 
 	//! The main window which is the parent of this object
-	StelMainView* mainWin;
+	QMainWindow* mainWindow;
 
 	// The associated StelCore instance
 	StelCore* core;
@@ -465,6 +476,8 @@ private:
 	StelVideoMgr* videoMgr;
 
 	StelSkyLayerMgr* skyImageMgr;
+
+	bool currentDarkMode = false;
 
 #ifdef ENABLE_SCRIPTING
 	// The script API proxy object (for bridging threads)

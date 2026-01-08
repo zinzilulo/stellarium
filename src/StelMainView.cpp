@@ -51,6 +51,7 @@
 #include <QPluginLoader>
 #include <QScreen>
 #include <QSettings>
+#include <QStyle>
 #include <QRegularExpression>
 #include <QtPlugin>
 #include <QThread>
@@ -82,6 +83,7 @@ Q_LOGGING_CATEGORY(mainview, "stel.MainView")
 
 // Initialize static variables
 StelMainView* StelMainView::singleton = Q_NULLPTR;
+QMainWindow* StelMainView::mainWindow = nullptr;
 
 class StelGLWidget : public QOpenGLWidget
 {
@@ -657,7 +659,6 @@ StelMainView::StelMainView(QSettings* settings)
 	qApp->installEventFilter(this);
 
 	setWindowIcon(QIcon(":/mainWindow/icon.bmp"));
-	initTitleI18n();
 	setObjectName("MainView");
 
 	setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
@@ -937,30 +938,6 @@ void StelMainView::init()
 	//setup StelOpenGLArray global state
 	StelOpenGLArray::initGL();
 
-	//create and initialize main app
-	stelApp = new StelApp(this);
-	stelApp->setGui(gui);
-	stelApp->init(configuration);
-	//this makes sure the app knows how large the window is
-	connect(stelScene,SIGNAL(sceneRectChanged(QRectF)),stelApp,SLOT(glWindowHasBeenResized(QRectF)));
-#ifdef ENABLE_SPOUT
-	QObject::connect(stelScene, &StelGraphicsScene::sceneRectChanged, [&](const QRectF& rect)
-	{
-        stelApp->glPhysicalWindowHasBeenResized(getPhysicalSize(rect));
-	});
-#endif
-
-	//also immediately set the current values
-	stelApp->glWindowHasBeenResized(stelScene->sceneRect());
-#ifdef ENABLE_SPOUT
-	stelApp->glPhysicalWindowHasBeenResized(getPhysicalSize(stelScene->sceneRect()));
-#endif
-
-	StelActionMgr *actionMgr = stelApp->getStelActionManager();
-	actionMgr->addAction("actionSave_Screenshot_Global", N_("Miscellaneous"), N_("Save screenshot"), this, "saveScreenShot()", "Ctrl+S");
-	actionMgr->addAction("actionReload_Shaders", N_("Miscellaneous"), N_("Reload shaders (for development)"), this, "reloadShaders()", "Ctrl+R, P");
-	actionMgr->addAction("actionSet_Full_Screen_Global", N_("Display Options"), N_("Full-screen mode"), this, "fullScreen", "F11");
-	
 	StelPainter::initGLShaders();
 
 	guiItem = new StelGuiItem(size(), rootItem);
@@ -969,6 +946,7 @@ void StelMainView::init()
 	focusSky();
 	nightModeEffect = new NightModeGraphicsEffect(this);
 	updateNightModeProperty(StelApp::getInstance().getVisionModeNight());
+	updateDarkModeProperty(StelApp::getInstance().getDarkMode());
 	//install the effect on the whole view
 	rootItem->setGraphicsEffect(nightModeEffect);
 
@@ -987,18 +965,12 @@ void StelMainView::init()
         setMinTimeBetweenFrames(qMax(0, configuration->value("video/min_time_between_frames",5).toInt()));
 	setSkyBackgroundColor(Vec3f(configuration->value("color/sky_background_color", "0,0,0").toString()));
 
-	// XXX: This should be done in StelApp::init(), unfortunately for the moment we need to init the gui before the
-	// plugins, because the gui creates the QActions needed by some plugins.
-	stelApp->initPlugIns();
-
-	// The script manager can only be fully initialized after the plugins have loaded.
-	stelApp->initScriptMgr();
-
 	// Set the global stylesheet, this is only useful for the tooltips.
 	StelGui* sgui = dynamic_cast<StelGui*>(stelApp->getGui());
 	if (sgui!=Q_NULLPTR)
 		setStyleSheet(sgui->getStelStyle().qtStyleSheet);
 	connect(stelApp, SIGNAL(visionNightModeChanged(bool)), this, SLOT(updateNightModeProperty(bool)));
+	connect(stelApp, SIGNAL(darkModeChanged(bool)), this, SLOT(updateDarkModeProperty(bool)));
 
 	// I doubt this will have any effect on framerate, but may cause problems elsewhere?
 	QThread::currentThread()->setPriority(QThread::HighestPriority);
@@ -1067,6 +1039,11 @@ void StelMainView::updateNightModeProperty(bool b)
 	// So that the bottom bar tooltips get properly rendered in night mode.
 	setProperty("nightMode", b);
 	nightModeEffect->setEnabled(b);
+}
+
+void StelMainView::updateDarkModeProperty(bool b)
+{
+	setProperty("darkMode", b);
 }
 
 void StelMainView::reloadShaders()
@@ -1609,12 +1586,6 @@ void StelMainView::moveEvent(QMoveEvent * event)
 	}
 }
 
-void StelMainView::closeEvent(QCloseEvent* event)
-{
-	Q_UNUSED(event)
-	stelApp->quit();
-}
-
 //! Delete openGL textures (to call before the GLContext disappears)
 void StelMainView::deinitGL()
 {
@@ -1980,15 +1951,3 @@ Vec3f StelMainView::getSkyBackgroundColor() const
 	return rootItem->getSkyBackgroundColor();
 }
 
-QRectF StelMainView::setWindowSize(int width, int height)
-{
-	// Make sure to leave fullscreen if necessary.
-	if (isFullScreen())
-		setFullScreen(false);
-	QRect geo=geometry();
-	geo.setWidth(width);
-	geo.setHeight(height);
-	setGeometry(geo);
-
-	return stelScene->sceneRect(); // retrieve what was finally available.
-}

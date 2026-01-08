@@ -23,6 +23,7 @@
 #include <QCoreApplication>
 #include <QGraphicsView>
 #include <QEventLoop>
+#include <QMainwindow>
 #include <QOpenGLContext>
 #include <QTimer>
 #ifdef OPENGL_DEBUG_LOGGING
@@ -50,7 +51,6 @@ class StelMainView : public QGraphicsView
 	friend class StelGraphicsScene;
 	friend class NightModeGraphicsEffect;
 	Q_OBJECT
-	Q_PROPERTY(bool fullScreen                 READ isFullScreen                  WRITE setFullScreen                 NOTIFY fullScreenChanged)
 	Q_PROPERTY(bool flagInvertScreenShotColors READ getFlagInvertScreenShotColors WRITE setFlagInvertScreenShotColors NOTIFY flagInvertScreenShotColorsChanged)
 	Q_PROPERTY(bool flagScreenshotDateFileName READ getFlagScreenshotDateFileName WRITE setFlagScreenshotDateFileName NOTIFY flagScreenshotDateFileNameChanged)
 	Q_PROPERTY(QString screenShotFileMask      READ getScreenshotFileMask         WRITE setScreenshotFileMask         NOTIFY screenshotFileMaskChanged)
@@ -67,6 +67,8 @@ class StelMainView : public QGraphicsView
 	Q_PROPERTY(int maxFps	                   READ getMaxFps                     WRITE setMaxFps                     NOTIFY maxFpsChanged)
 	Q_PROPERTY(int minTimeBetweenFrames        READ getMinTimeBetweenFrames       WRITE setMinTimeBetweenFrames       NOTIFY minTimeBetweenFramesChanged)
 public:
+	static void setMainWindow(QMainWindow* w) { mainWindow = w; }
+    static QMainWindow* getMainWindow() { return mainWindow; }
 	//! Contains some basic info about the OpenGL context used
 	struct GLInfo
 	{
@@ -90,10 +92,6 @@ public:
 	//! Start the main initialization of Stellarium
 	void init();
 	void deinit();
-
-	//! Set the application title for the current language.
-	//! This is useful for e.g. chinese.
-	void initTitleI18n();
 
 	//! Get the StelMainView singleton instance.
 	static StelMainView& getInstance() {Q_ASSERT(singleton); return *singleton;}
@@ -123,10 +121,6 @@ public:
 
 	//! Returns the desired OpenGL format settings.
 	static QSurfaceFormat getDesiredGLFormat(QSettings *configuration);
-
-	//! Set image size in windowed mode. Leaves fullScreen if necessary.
-	//! This is required for externally accessing Stellarium from other programs, do not delete!
-	QRectF setWindowSize(int width, int height);
 
 public slots:
 
@@ -234,8 +228,6 @@ protected:
 	//! Hack to determine current monitor pixel ratio
 	//! @todo Find a better way to handle this
 	void moveEvent(QMoveEvent* event) override;
-	//! Handle window closed event, calling StelApp::quit()
-	void closeEvent(QCloseEvent* event) override;
 	//! Handle window resized events, and change the size of the underlying
 	//! QGraphicsScene to be the same
 	void resizeEvent(QResizeEvent* event) override;
@@ -252,7 +244,6 @@ signals:
 	//!
 	//! @remark FS: is threaded access here even a possibility anymore, or a remnant of older code?
 	void screenshotRequested(void);
-	void fullScreenChanged(bool b);
 	//! Emitted when the "Reload shaders" action is performed
 	//! Interested objects should subscribe to this signal and reload their shaders
 	//! when this is emitted
@@ -291,10 +282,12 @@ private slots:
 	void contextDestroyed();
 #endif
 	void updateNightModeProperty(bool b);
+	void updateDarkModeProperty(bool b);
 
 	void reloadShaders();
 
 private:
+	static QMainWindow* mainWindow;
 	//! The graphics scene notifies us when a draw finished, so that we can queue the next one
 	void drawEnded();
 	//! provide extended OpenGL diagnostics in logfile.
@@ -315,6 +308,8 @@ private:
 	class StelRootItem* rootItem;
 	QGraphicsWidget* guiItem;
 	QGraphicsEffect* nightModeEffect;
+
+	void reloadStyleSheetForDarkMode(bool darkMode);
 
 	//! The openGL viewport of the graphics scene
 	//! Responsible for main GL setup, rendering is done in the scene background
