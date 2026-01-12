@@ -23,7 +23,7 @@
 #include <QCoreApplication>
 #include <QGraphicsView>
 #include <QEventLoop>
-#include <QMainwindow>
+#include <QMainWindow>
 #include <QOpenGLContext>
 #include <QTimer>
 #ifdef OPENGL_DEBUG_LOGGING
